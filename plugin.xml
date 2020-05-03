@@ -68,6 +68,7 @@
             <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
             <string name="no_camera_permission">This application cannot run because it does not have the camera permission.  The application will now exit.</string>
             <string name="low_storage_error">Face detector dependencies cannot be downloaded due to low device storage</string>
+            <string name="title_activity_main">Barcode Reader Activity</string>
             <string name="barcode_header">Click &quot;Read Barcode&quot; to read a barcode</string>
             <string name="read_barcode">Read Barcode</string>
             <string name="auto_focus">Auto Focus</string>
@@ -94,6 +95,9 @@
                      target-dir="src/com/dealrinc/gmvScanner/ui/camera"/>
         <source-file src="src/android/src/gmvScanner/ui/camera/GraphicOverlay.java"
                      target-dir="src/com/dealrinc/gmvScanner/ui/camera"/>
+
+        <resource-file src="src/android/res/layout/activity_main.xml"
+                       target="res/layout/activity_gmv_barcode_scanner.xml"/>
         <resource-file src="src/android/res/layout/barcode_capture.xml"
                        target="res/layout/barcode_capture.xml"/>
 

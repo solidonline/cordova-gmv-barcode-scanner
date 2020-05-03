@@ -76,8 +76,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     // constants used to pass extra data in the intent
     public Integer DetectionTypes;
-    public double ViewFinderWidth = .5;
-    public double ViewFinderHeight = .7;
+    public double ViewFinderWidth = 1;
+    public double ViewFinderHeight = 1;
 
     public static final String BarcodeObject = "Barcode";
 
@@ -124,8 +124,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
         // read parameters from the intent used to launch the activity.
         DetectionTypes = getIntent().getIntExtra("DetectionTypes", 1234);
-        ViewFinderWidth = getIntent().getDoubleExtra("ViewFinderWidth", .5);
-        ViewFinderHeight = getIntent().getDoubleExtra("ViewFinderHeight", .7);
+        ViewFinderWidth = getIntent().getDoubleExtra("ViewFinderWidth", 1);
+        ViewFinderHeight = getIntent().getDoubleExtra("ViewFinderHeight", 1);
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -251,7 +251,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         // at long distances.
         CameraSource.Builder builder = new CameraSource.Builder(getApplicationContext(), barcodeDetector)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
-                .setRequestedPreviewSize(width, height)
+                .setRequestedPreviewSize(width * 2, height * 2)
                 .setRequestedFps(15.0f);
 
         // make sure that auto focus is an available option
@@ -328,8 +328,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             Log.d(TAG, "Camera permission granted - initialize the camera source");
             // we have permission, so create the camerasource
             DetectionTypes = getIntent().getIntExtra("DetectionTypes", 0);
-            ViewFinderWidth = getIntent().getDoubleExtra("ViewFinderWidth", .5);
-            ViewFinderHeight = getIntent().getDoubleExtra("ViewFinderHeight", .7);
+            ViewFinderWidth = getIntent().getDoubleExtra("ViewFinderWidth", 1);
+            ViewFinderHeight = getIntent().getDoubleExtra("ViewFinderHeight", 1);
 
             createCameraSource(true, false);
             return;

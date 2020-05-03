@@ -53,8 +53,8 @@ public class SecondaryActivity extends Activity implements View.OnClickListener 
         Intent intent = new Intent(this, BarcodeCaptureActivity.class);
 
         intent.putExtra("DetectionTypes", getIntent().getIntExtra("DetectionTypes", 1234));
-        intent.putExtra("ViewFinderWidth", getIntent().getDoubleExtra("DetectionTypes", .5));
-        intent.putExtra("ViewFinderHeight", getIntent().getDoubleExtra("DetectionTypes", .7));
+        intent.putExtra("ViewFinderWidth", getIntent().getDoubleExtra("DetectionTypes", 1));
+        intent.putExtra("ViewFinderHeight", getIntent().getDoubleExtra("DetectionTypes", 1));
 
         startActivityForResult(intent, RC_BARCODE_CAPTURE);
 

@@ -46,8 +46,8 @@ public class CameraSourcePreview extends ViewGroup {
     private CameraSource mCameraSource;
     private boolean mFlashState = false;
 
-    public double ViewFinderWidth = .5;
-    public double ViewFinderHeight = .7;
+    public double ViewFinderWidth = 1;
+    public double ViewFinderHeight = 1;
 
     private GraphicOverlay mOverlay;
 
@@ -216,7 +216,11 @@ public class CameraSourcePreview extends ViewGroup {
         int actualWidth = (int) (layoutWidth*ViewFinderWidth);
         int actualHeight = (int) (layoutHeight*ViewFinderHeight);
 
-        mViewFinderView.layout(layoutWidth/2 -actualWidth/2,layoutHeight/2 - actualHeight/2, layoutWidth/2 + actualWidth/2, layoutHeight/2 + actualHeight/2);
+        mViewFinderView.layout(layoutWidth/2 - actualWidth/2,
+        layoutHeight/2 - actualHeight/2,
+        layoutWidth/2 + actualWidth/2,
+        layoutHeight/2 + actualHeight/2
+        );
 
         int buttonSize = dpToPx(45);
         int torchLeft = (int) layoutWidth/2 + actualWidth/2 + (layoutWidth - (layoutWidth/2 + actualWidth/2))/2 - buttonSize/2;

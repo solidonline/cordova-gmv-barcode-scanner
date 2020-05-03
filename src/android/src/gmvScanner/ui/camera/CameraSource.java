@@ -19,20 +19,12 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.ContextWrapper;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
-import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.os.Build;
 import android.os.SystemClock;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicYuvToRGB;
-import android.renderscript.Type;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 import android.support.annotation.StringDef;
@@ -46,8 +38,6 @@ import com.google.android.gms.common.images.Size;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.Thread.State;
 import java.lang.annotation.Retention;
@@ -102,23 +92,23 @@ public class CameraSource {
     private static final float ASPECT_RATIO_TOLERANCE = 0.01f;
 
     @StringDef({
-            Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE,
-            Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO,
-            Camera.Parameters.FOCUS_MODE_AUTO,
-            Camera.Parameters.FOCUS_MODE_EDOF,
-            Camera.Parameters.FOCUS_MODE_FIXED,
-            Camera.Parameters.FOCUS_MODE_INFINITY,
-            Camera.Parameters.FOCUS_MODE_MACRO
+        Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE,
+        Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO,
+        Camera.Parameters.FOCUS_MODE_AUTO,
+        Camera.Parameters.FOCUS_MODE_EDOF,
+        Camera.Parameters.FOCUS_MODE_FIXED,
+        Camera.Parameters.FOCUS_MODE_INFINITY,
+        Camera.Parameters.FOCUS_MODE_MACRO
     })
     @Retention(RetentionPolicy.SOURCE)
     private @interface FocusMode {}
 
     @StringDef({
-            Camera.Parameters.FLASH_MODE_ON,
-            Camera.Parameters.FLASH_MODE_OFF,
-            Camera.Parameters.FLASH_MODE_AUTO,
-            Camera.Parameters.FLASH_MODE_RED_EYE,
-            Camera.Parameters.FLASH_MODE_TORCH
+        Camera.Parameters.FLASH_MODE_ON,
+        Camera.Parameters.FLASH_MODE_OFF,
+        Camera.Parameters.FLASH_MODE_AUTO,
+        Camera.Parameters.FLASH_MODE_RED_EYE,
+        Camera.Parameters.FLASH_MODE_TORCH
     })
     @Retention(RetentionPolicy.SOURCE)
     private @interface FlashMode {}
@@ -129,11 +119,6 @@ public class CameraSource {
 
     // Guarded by mCameraLock
     private Camera mCamera;
-    public int viewWidth;
-    public int viewHeight;
-
-    public double ViewFinderWidth = .5;
-    public double ViewFinderHeight = .7;
 
     private int mFacing = CAMERA_FACING_BACK;
 
@@ -144,8 +129,6 @@ public class CameraSource {
     private int mRotation;
 
     private Size mPreviewSize;
-
-    private List<Camera.Area> mFocusAreas;
 
     // These values may be requested by the caller.  Due to hardware limitations, we may need to
     // select close, but not exactly the same values for these.
@@ -349,7 +332,6 @@ public class CameraSource {
      *
      * @throws IOException if the camera's preview texture or display could not be initialized
      */
-    @SuppressLint("MissingPermission")
     @RequiresPermission(Manifest.permission.CAMERA)
     public CameraSource start() throws IOException {
         synchronized (mCameraLock) {
@@ -384,7 +366,6 @@ public class CameraSource {
      * @param surfaceHolder the surface holder to use for the preview frames
      * @throws IOException if the supplied surface holder could not be used as the preview display
      */
-    @SuppressLint("MissingPermission")
     @RequiresPermission(Manifest.permission.CAMERA)
     public CameraSource start(SurfaceHolder surfaceHolder) throws IOException {
         synchronized (mCameraLock) {
@@ -816,7 +797,6 @@ public class CameraSource {
 
         // setting mFlashMode to the one set in the params
         mFlashMode = parameters.getFlashMode();
-        parameters.setFocusAreas(mFocusAreas);
 
         camera.setParameters(parameters);
 
@@ -860,11 +840,11 @@ public class CameraSource {
      * image.
      *
      * @param camera        the camera to select a preview size from
-     * @param width  the desired width of the camera preview frames
-     * @param height the desired height of the camera preview frames
+     * @param desiredWidth  the desired width of the camera preview frames
+     * @param desiredHeight the desired height of the camera preview frames
      * @return the selected preview and picture size pair
      */
-    private static SizePair selectSizePair(Camera camera, int width, int height) {
+    private static SizePair selectSizePair(Camera camera, int desiredWidth, int desiredHeight) {
         List<SizePair> validPreviewSizes = generateValidPreviewSizeList(camera);
 
         // The method for selecting the best size is to minimize the sum of the differences between
@@ -872,21 +852,11 @@ public class CameraSource {
         // only way to select the best size, but it provides a decent tradeoff between using the
         // closest aspect ratio vs. using the closest pixel area.
         SizePair selectedPair = null;
-        final double ASPECT_TOLERANCE = 0.2;
         int minDiff = Integer.MAX_VALUE;
-        int desiredWidth = width > height ? width : height;
-        int desiredHeight = width > height ? height : width;
-        double targetRatio = (double) desiredWidth / desiredHeight;
-
         for (SizePair sizePair : validPreviewSizes) {
             Size size = sizePair.previewSize();
-            double ratio = (double) size.getWidth() / size.getHeight();
-            int diff = Math.abs(size.getHeight() - desiredHeight);
-
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) {
-                continue;
-            }
-
+            int diff = Math.abs(size.getWidth() - desiredWidth) +
+                    Math.abs(size.getHeight() - desiredHeight);
             if (diff < minDiff) {
                 selectedPair = sizePair;
                 minDiff = diff;
@@ -1116,7 +1086,6 @@ public class CameraSource {
         private long mPendingTimeMillis;
         private int mPendingFrameId = 0;
         private ByteBuffer mPendingFrameData;
-        private Bitmap mPendingFrameBitmap;
 
         FrameProcessingRunnable(Detector<?> detector) {
             mDetector = detector;
@@ -1157,8 +1126,8 @@ public class CameraSource {
 
                 if (!mBytesToByteBuffer.containsKey(data)) {
                     Log.d(TAG,
-                            "Skipping frame.  Could not find ByteBuffer associated with the image " +
-                                    "data from the camera.");
+                        "Skipping frame.  Could not find ByteBuffer associated with the image " +
+                        "data from the camera.");
                     return;
                 }
 
@@ -1167,58 +1136,10 @@ public class CameraSource {
                 mPendingTimeMillis = SystemClock.elapsedRealtime() - mStartTimeMillis;
                 mPendingFrameId++;
                 mPendingFrameData = mBytesToByteBuffer.get(data);
-                mPendingFrameBitmap = Bitmap.createBitmap(mPreviewSize.getWidth(), mPreviewSize.getHeight(), Bitmap.Config.ARGB_8888);
-                Allocation bmData = renderScriptNV21ToRGBA888(
-                        mContext,
-                        mPreviewSize.getWidth(),
-                        mPreviewSize.getHeight(),
-                        data);
-                bmData.copyTo(mPendingFrameBitmap);
+
                 // Notify the processor thread if it is waiting on the next frame (see below).
                 mLock.notifyAll();
             }
-        }
-
-
-        public Allocation renderScriptNV21ToRGBA888(Context context, int width, int height, byte[] nv21) {
-            RenderScript rs = RenderScript.create(context);
-            ScriptIntrinsicYuvToRGB yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs));
-
-            Type.Builder yuvType = new Type.Builder(rs, Element.U8(rs)).setX(nv21.length);
-            Allocation in = Allocation.createTyped(rs, yuvType.create(), Allocation.USAGE_SCRIPT);
-
-            Type.Builder rgbaType = new Type.Builder(rs, Element.RGBA_8888(rs)).setX(width).setY(height);
-            Allocation out = Allocation.createTyped(rs, rgbaType.create(), Allocation.USAGE_SCRIPT);
-
-            in.copyFrom(nv21);
-
-            yuvToRgbIntrinsic.setInput(in);
-            yuvToRgbIntrinsic.forEach(out);
-            return out;
-        }
-
-        private String saveToInternalStorage(Bitmap bitmapImage){
-            ContextWrapper cw = new ContextWrapper(mContext);
-            // path to /data/data/yourapp/app_data/imageDir
-            File directory = cw.getDir("imageDir", Context.MODE_WORLD_READABLE);
-            // Create imageDir
-            File mypath=new File(directory,"profile.jpg");
-
-            FileOutputStream fos = null;
-            try {
-                fos = new FileOutputStream(mypath);
-                // Use the compress method on the BitMap object to write image to the OutputStream
-                bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            return directory.getAbsolutePath();
         }
 
         /**
@@ -1261,50 +1182,9 @@ public class CameraSource {
                         return;
                     }
 
-                    // Extract the viewfinder portion of the preview.
-
-                    float origFrameWidth = (float) mPreviewSize.getWidth();
-                    float origFrameHeight = (float) mPreviewSize.getHeight();
-                    if (origFrameHeight < origFrameWidth) {
-                        origFrameWidth = (float) mPreviewSize.getHeight();
-                        origFrameHeight = (float) mPreviewSize.getWidth();
-                    }
-
-                    float ratio = origFrameHeight / viewHeight;
-                    if (ratio > origFrameWidth/viewWidth) {
-                        ratio = origFrameWidth/viewWidth;
-                    }
-
-                    int newViewWidth = (int) (viewWidth * ratio);
-                    int newViewHeight = (int) (viewHeight * ratio);
-
-                    int viewFinderWidth = (int) (newViewWidth * ViewFinderWidth);
-                    int viewFinderHeight = (int) (newViewHeight * ViewFinderHeight);
-
-                    int x = (int) (origFrameWidth/2 - viewFinderWidth/2);
-                    int y = (int) (origFrameHeight/2 - viewFinderHeight/2);
-
-                    Matrix matrix = new Matrix();
-
-                    matrix.postRotate(90);
-
-                    mPendingFrameBitmap = Bitmap.createBitmap(mPendingFrameBitmap, 0, 0, mPendingFrameBitmap.getWidth(), mPendingFrameBitmap.getHeight(), matrix, true);
-                    Log.d(TAG, (origFrameWidth/viewHeight) + "viewWidth:" + viewWidth + " viewHeight:" + viewHeight + " r:" + ratio + " x:" + x + " y:" + y + " w:" + viewFinderWidth + " h:"+viewFinderHeight + " w1:" + origFrameWidth + " h1:" +origFrameHeight);
-                    Bitmap resizedBitmap;
-                    
-                    if (viewFinderWidth == 0 || viewFinderHeight == 0)
-                    {
-                      resizedBitmap = mPendingFrameBitmap;
-                    }
-                    else
-                    {
-                      resizedBitmap = Bitmap.createBitmap(mPendingFrameBitmap, x,y,viewFinderWidth, viewFinderHeight);
-                    }
-
                     outputFrame = new Frame.Builder()
-                            .setBitmap(resizedBitmap)
-                            /*.setImageData(mPendingFrameData, mPreviewSize.getWidth(),
-                                    mPreviewSize.getHeight(), ImageFormat.NV21) //*/
+                            .setImageData(mPendingFrameData, mPreviewSize.getWidth(),
+                                    mPreviewSize.getHeight(), ImageFormat.NV21)
                             .setId(mPendingFrameId)
                             .setTimestampMillis(mPendingTimeMillis)
                             .setRotation(mRotation)
@@ -1315,7 +1195,6 @@ public class CameraSource {
                     // recycled back to the camera before we are done using that data.
                     data = mPendingFrameData;
                     mPendingFrameData = null;
-                    mPendingFrameBitmap = null;
                 }
 
                 // The code below needs to run outside of synchronization, because this will allow

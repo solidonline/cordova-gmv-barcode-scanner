@@ -16,13 +16,15 @@ import android.util.Log;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.vision.barcode.Barcode;
 
+import javax.security.auth.callback.Callback;
+
 
 /**
  * This class echoes a string called from JavaScript.
  */
 public class CDVAndroidScanner extends CordovaPlugin {
 
-    private CallbackContext mCallbackContext;
+    protected CallbackContext mCallbackContext;
 
     private static final int RC_BARCODE_CAPTURE = 9001;
 
@@ -52,10 +54,10 @@ public class CDVAndroidScanner extends CordovaPlugin {
     }
 
     private void openNewActivity(Context context, JSONArray args) {
-		Intent intent = new Intent(context, BarcodeCaptureActivity.class);
+		Intent intent = new Intent(context, SecondaryActivity.class);
         intent.putExtra("DetectionTypes", args.optInt(0, 1234));
         intent.putExtra("ViewFinderWidth", args.optDouble(1, .5));
-        intent.putExtra("ViewFinderHeight", args.optDouble(2, .7));
+        intent.putExtra("ViewFinderHeight", args.optDouble(1, .7));
 
         this.cordova.setActivityResultCallback(this);
         this.cordova.startActivityForResult(this, intent, RC_BARCODE_CAPTURE);
@@ -65,9 +67,10 @@ public class CDVAndroidScanner extends CordovaPlugin {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+        
         if (requestCode == RC_BARCODE_CAPTURE) {
             if (resultCode == CommonStatusCodes.SUCCESS) {
+                Intent d = new Intent();
                 if (data != null) {
                     Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
                     JSONArray result = new JSONArray();
@@ -79,7 +82,7 @@ public class CDVAndroidScanner extends CordovaPlugin {
                     Log.d("CDVAndroidScanner", "Barcode read: " + barcode.displayValue);
                 }
             } else {
-                String err = data.getStringExtra("err");
+                String err = data.getParcelableExtra("err");
                 JSONArray result = new JSONArray();
                 result.put(err);
                 result.put("");
@@ -88,9 +91,24 @@ public class CDVAndroidScanner extends CordovaPlugin {
             }
         }
     }
-
+    
     @Override
     public void onRestoreStateForActivityResult(Bundle state, CallbackContext callbackContext) {
         mCallbackContext = callbackContext;
     }
+    
+/*
+    private void startScan(CallbackContext callbackContext) {
+		Intent intent = new Intent(this, MainActivity.class);
+		//intent.putExtra(BarcodeCaptureActivity.AutoFocus, autoFocus.isChecked());
+		//intent.putExtra(BarcodeCaptureActivity.UseFlash, useFlash.isChecked());
+
+		startActivityForResult(intent, RC_BARCODE_CAPTURE);
+
+        if (true) {
+			callbackContext.success("Test response!!!!");
+        } else {
+            callbackContext.error("Expected one non-empty string argument.");
+        }
+    }*/
 }

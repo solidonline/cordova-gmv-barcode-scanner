@@ -46,8 +46,8 @@ public class CameraSourcePreview extends ViewGroup {
     private CameraSource mCameraSource;
     private boolean mFlashState = false;
 
-    public double ViewFinderWidth = 1;
-    public double ViewFinderHeight = 1;
+    public double ViewFinderWidth = .5;
+    public double ViewFinderHeight = .7;
 
     private GraphicOverlay mOverlay;
 

@@ -34,7 +34,6 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -76,8 +75,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     // constants used to pass extra data in the intent
     public Integer DetectionTypes;
-    public double ViewFinderWidth = 1;
-    public double ViewFinderHeight = 1;
+    public double ViewFinderWidth = .5;
+    public double ViewFinderHeight = .7;
 
     public static final String BarcodeObject = "Barcode";
 
@@ -124,8 +123,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
         // read parameters from the intent used to launch the activity.
         DetectionTypes = getIntent().getIntExtra("DetectionTypes", 1234);
-        ViewFinderWidth = getIntent().getDoubleExtra("ViewFinderWidth", 1);
-        ViewFinderHeight = getIntent().getDoubleExtra("ViewFinderHeight", 1);
+        ViewFinderWidth = getIntent().getDoubleExtra("ViewFinderWidth", .5);
+        ViewFinderHeight = getIntent().getDoubleExtra("ViewFinderHeight", .7);
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -238,20 +237,18 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             }
         }
 
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
-        int width = displayMetrics.widthPixels;
-        int height = displayMetrics.heightPixels;
+        int width = size.x;
+        int height = size.y;
 
         // Creates and starts the camera.  Note that this uses a higher resolution in comparison
         // to other detection examples to enable the barcode detector to detect small barcodes
         // at long distances.
         CameraSource.Builder builder = new CameraSource.Builder(getApplicationContext(), barcodeDetector)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
-                .setRequestedPreviewSize(width * 2, height * 2)
+                .setRequestedPreviewSize(1600, 1024)
                 .setRequestedFps(15.0f);
 
         // make sure that auto focus is an available option
@@ -514,7 +511,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             val = val.replaceAll("[ioqIOQ]", "");
 
             val = val.substring(0, Math.min(val.length(), 17));
-            
+
             barcode.rawValue = val;
 
             if(validateVin(val)) {

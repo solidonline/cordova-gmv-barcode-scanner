@@ -56,8 +56,8 @@ public class CDVAndroidScanner extends CordovaPlugin {
     private void openNewActivity(Context context, JSONArray args) {
 		Intent intent = new Intent(context, SecondaryActivity.class);
         intent.putExtra("DetectionTypes", args.optInt(0, 1234));
-        intent.putExtra("ViewFinderWidth", args.optDouble(1, 1));
-        intent.putExtra("ViewFinderHeight", args.optDouble(1, 1));
+        intent.putExtra("ViewFinderWidth", args.optDouble(1, .5));
+        intent.putExtra("ViewFinderHeight", args.optDouble(1, .7));
 
         this.cordova.setActivityResultCallback(this);
         this.cordova.startActivityForResult(this, intent, RC_BARCODE_CAPTURE);
@@ -67,7 +67,7 @@ public class CDVAndroidScanner extends CordovaPlugin {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        
+
         if (requestCode == RC_BARCODE_CAPTURE) {
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 Intent d = new Intent();
@@ -91,12 +91,12 @@ public class CDVAndroidScanner extends CordovaPlugin {
             }
         }
     }
-    
+
     @Override
     public void onRestoreStateForActivityResult(Bundle state, CallbackContext callbackContext) {
         mCallbackContext = callbackContext;
     }
-    
+
 /*
     private void startScan(CallbackContext callbackContext) {
 		Intent intent = new Intent(this, MainActivity.class);
